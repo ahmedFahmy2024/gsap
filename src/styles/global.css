@@ -1,0 +1,265 @@
+@import './tokens.css';
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html {
+  /* Lenis owns smoothing; native smooth-behavior would double-interpolate */
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+/* Layout primitives */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-pad);
+}
+
+/* Sections — min 100svh each; the scroll track the story is mapped onto */
+.section {
+  position: relative;
+  z-index: var(--z-content);
+  display: flex;
+  align-items: center;
+  min-height: 100svh;
+  padding-block: var(--space-section);
+}
+
+/* Side-stage layouts: copy keeps to one half, the other half is a
+   transparent window reserved for the fixed 3D stage (Phase 2). */
+.section--stage-right .section__copy {
+  margin-right: auto;
+  max-width: 34rem;
+}
+.section--stage-left .section__copy {
+  margin-left: auto;
+  max-width: 34rem;
+}
+
+/* Type roles */
+.eyebrow {
+  font-size: var(--text-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
+}
+
+.display {
+  font-size: var(--text-display);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-display);
+}
+
+.headline {
+  font-size: var(--text-headline);
+  font-weight: 650;
+  line-height: var(--leading-snug);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-3);
+}
+
+.lede {
+  color: var(--color-text-dim);
+  max-width: 38rem;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  justify-content: center;
+}
+
+.hero .section__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hero__tagline {
+  color: var(--color-text-dim);
+  font-size: var(--text-title);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.hero__hint {
+  position: absolute;
+  bottom: var(--space-4);
+  left: 50%;
+  translate: -50% 0;
+  color: var(--color-text-dim);
+  font-size: var(--text-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+/* CTA */
+.cta {
+  text-align: center;
+  justify-content: center;
+}
+
+.cta .section__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: none;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.9em 2em;
+  border-radius: 999px;
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-weight: 600;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.button--ghost {
+  background: transparent;
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+
+/* Header */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: var(--z-chrome);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--container-pad);
+  pointer-events: none; /* re-enabled on children so it never blocks scroll */
+}
+
+.site-header > * {
+  pointer-events: auto;
+}
+
+.site-header__wordmark {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 1.0625rem;
+}
+
+.site-header__nav {
+  display: flex;
+  gap: var(--space-3);
+  font-size: 0.875rem;
+  color: var(--color-text-dim);
+}
+
+.site-header__nav button:hover {
+  color: var(--color-text);
+}
+
+@media (max-width: 48rem) {
+  .site-header__nav {
+    display: none;
+  }
+}
+
+/* Chapter indicator — fixed progress dots */
+.chapters {
+  position: fixed;
+  right: var(--space-3);
+  top: 50%;
+  translate: 0 -50%;
+  z-index: var(--z-chrome);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.chapters__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--color-line);
+  transition:
+    background 0.3s ease,
+    scale 0.3s ease;
+}
+
+.chapters__dot[aria-current='true'] {
+  background: var(--color-accent);
+  scale: 1.4;
+}
+
+@media (max-width: 48rem) {
+  .chapters {
+    display: none;
+  }
+}
+
+/* Footer */
+.site-footer {
+  position: relative;
+  z-index: var(--z-content);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--container-pad);
+  border-top: 1px solid var(--color-line);
+  color: var(--color-text-dim);
+  font-size: 0.875rem;
+}

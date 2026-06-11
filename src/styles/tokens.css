@@ -1,0 +1,47 @@
+/*
+ * Design tokens — single source of truth for the DOM layer.
+ * Motion tokens (easing curves, durations) live in src/story/motion.ts
+ * because GSAP consumes them; keep the two files in sync by name.
+ */
+:root {
+  /* Color — dark, warm-neutral stage so the future 3D object owns the light */
+  --color-bg: #0b0b0c;
+  --color-surface: #131315;
+  --color-text: #f4f2ee;
+  --color-text-dim: #9b978f;
+  --color-accent: #e8602c;
+  --color-line: rgb(244 242 238 / 0.12);
+
+  /* Type — fluid scale, system stack until a brand face is licensed */
+  --font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --text-display: clamp(3rem, 1.5rem + 9vw, 8.5rem);
+  --text-headline: clamp(2rem, 1.25rem + 3.5vw, 4.25rem);
+  --text-title: clamp(1.375rem, 1.1rem + 1.2vw, 2rem);
+  --text-body: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  --text-eyebrow: 0.8125rem;
+
+  --leading-tight: 1.02;
+  --leading-snug: 1.15;
+  --leading-body: 1.6;
+  --tracking-display: -0.03em;
+  --tracking-eyebrow: 0.18em;
+
+  /* Space — 8px base, fluid section rhythm */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --space-5: 4rem;
+  --space-section: clamp(5rem, 12vh, 10rem);
+
+  /* Layout */
+  --container-max: 80rem;
+  --container-pad: clamp(1.25rem, 4vw, 3rem);
+
+  /* Z layers — the stage (canvas, Phase 2) sits between bg and content */
+  --z-stage: 0;
+  --z-content: 10;
+  --z-chrome: 100;
+}
