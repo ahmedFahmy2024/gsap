@@ -52,6 +52,45 @@ a {
   color: var(--color-bg);
 }
 
+/* The 3D stage — one persistent fixed canvas behind the scrolling content
+   (design §4). pointer-events stays off so the DOM owns all interaction;
+   the fade-in fires once the stage's Suspense tree commits. */
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-stage);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.stage--ready {
+  opacity: 1;
+}
+
+/* Stage load progress — delayed fade-in so fast loads never flash it */
+.stage-progress {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: var(--z-chrome);
+  height: 2px;
+  background: var(--color-line);
+  opacity: 0;
+  animation: stage-progress-in 0.3s ease 0.4s forwards;
+}
+
+.stage-progress__bar {
+  height: 100%;
+  background: var(--color-accent);
+  transition: width 0.2s ease;
+}
+
+@keyframes stage-progress-in {
+  to {
+    opacity: 1;
+  }
+}
+
 /* Layout primitives */
 .container {
   width: 100%;

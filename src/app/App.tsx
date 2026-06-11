@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { StageMount } from './StageMount';
 import { CtaSection } from '../sections/CtaSection';
 import { HeroSection } from '../sections/HeroSection';
 import { StorySection } from '../sections/StorySection';
@@ -20,8 +21,8 @@ export default function App() {
     <div ref={pageRef}>
       <SiteHeader />
       <ChapterIndicator />
-      {/* The fixed 3D stage mounts here in Phase 2, at --z-stage,
-          behind the scrolling content. */}
+      {/* The fixed 3D stage — at --z-stage, behind the scrolling content */}
+      <StageMount />
       <main>
         <HeroSection />
         {storySections.map((content) => (
