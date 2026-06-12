@@ -96,9 +96,40 @@ a {
   transition: width 0.2s ease;
 }
 
+/* Exit (Phase 5): the fill registers first (width transition above), then
+   the bar fades. The entrance animation stays in the list — same name, so
+   it keeps its timeline and its forwards fill remains the exit's start
+   value (dropping it would snap a visible bar to opacity 0); the exit
+   keyframe, later in the list, wins from there and fades to 0. A bar
+   still inside its appear-delay exits invisibly instead of flashing in.
+   StageMount unmounts after EXIT_MS. */
+.stage-progress--done {
+  animation:
+    stage-progress-in 0.3s ease 0.4s forwards,
+    stage-progress-out 0.5s ease 0.2s forwards;
+}
+
 @keyframes stage-progress-in {
   to {
     opacity: 1;
+  }
+}
+
+@keyframes stage-progress-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the flash-guard delay but skip the fade: progress is information,
+     motion is not. The exit unmounts instantly from StageMount. */
+  .stage-progress {
+    animation-duration: 0.01s;
+  }
+
+  .stage-progress__bar {
+    transition: none;
   }
 }
 

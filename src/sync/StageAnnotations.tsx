@@ -17,8 +17,10 @@ import { allAnnotations, type SceneAnnotation } from '../story/scenes';
  * the Director's call (descriptor visibleRange → store.visibleAnnotations).
  *
  * Tier 1 is budgeted for ≤ ~6 simultaneous labels (per-instance matrix work
- * and DOM mutation); the Tier-2 single-pass projection pool is the Phase 5
- * fallback if these show up in profiles.
+ * and DOM mutation); this page has 2. Phase 5 decision: Tier 1 stays — the
+ * Tier-2 single-pass projection pool (§7) gets built only if `Html` shows
+ * up in real-hardware profiles during the live gate, or if the label count
+ * ever approaches the ceiling.
  */
 export function StageAnnotations() {
   // Re-render on registry changes (registration frequency, not per-frame),

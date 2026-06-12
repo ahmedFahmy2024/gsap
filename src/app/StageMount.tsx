@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { useAppStore } from '../state/store';
 
 // The ONLY entry into stage/ from the app shell, and it is dynamic: Three,
@@ -28,24 +28,53 @@ export function StageMount() {
   );
 }
 
+/** Covers the exit animation (0.2 s fill + 0.5 s fade, see global.css). */
+const EXIT_MS = 750;
+
 /**
  * Thin real-progress bar while the stage chunk + assets stream in. CSS
- * delays its fade-in, so a fast load never flashes it; it unmounts the
- * moment the stage commits. Decorative only — never blocks the content.
+ * delays its fade-in, so a fast load never flashes it (this delayed
+ * appearance supersedes the §9 "minimum display time" idea — better than
+ * showing a loading state nobody needed). Decorative only — never blocks
+ * the content.
+ *
+ * Exit (Phase 5 polish): when the stage commits, the bar fills to 100% and
+ * fades out before unmounting, instead of vanishing mid-sliver. The exit
+ * is a CSS *animation* rather than a transition so it picks up from the
+ * entrance's current opacity — a bar that never appeared exits invisibly.
+ * Reduced motion unmounts immediately (transitions are stripped in CSS,
+ * so there is nothing to wait for).
  */
 function StageLoadingBar() {
   const stageReady = useAppStore((s) => s.stageReady);
   const stageProgress = useAppStore((s) => s.stageProgress);
+  const reducedMotion = useAppStore((s) => s.reducedMotion);
+  const [exitDone, setExitDone] = useState(false);
 
-  if (stageReady) {
+  useEffect(() => {
+    if (!stageReady || reducedMotion) {
+      return;
+    }
+    const id = window.setTimeout(() => setExitDone(true), EXIT_MS);
+    return () => window.clearTimeout(id);
+  }, [stageReady, reducedMotion]);
+
+  // Reduced motion exits instantly — derived, not stored. exitDone is only
+  // consulted once ready, so a fresh load cycle always shows the bar.
+  if (stageReady && (exitDone || reducedMotion)) {
     return null;
   }
 
   return (
-    <div className="stage-progress" role="presentation">
+    <div
+      className={
+        stageReady ? 'stage-progress stage-progress--done' : 'stage-progress'
+      }
+      role="presentation"
+    >
       <div
         className="stage-progress__bar"
-        style={{ width: `${Math.max(stageProgress, 5)}%` }}
+        style={{ width: stageReady ? '100%' : `${Math.max(stageProgress, 5)}%` }}
       />
     </div>
   );

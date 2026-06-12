@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Suspense, lazy, useEffect } from 'react';
 import { useAppStore } from '../state/store';
 import { renderProfiles } from '../systems/quality/quality';
+import { StagePerformance } from './StagePerformance';
 import { StageScene } from './StageScene';
 
 // Dev-only chunk: in production builds `import.meta.env.DEV` is statically
@@ -46,14 +47,24 @@ export default function StageCanvas() {
           powerPreference: 'high-performance',
           stencil: false,
         }}
-        // 'always' for v1 — the idle float means the scene is never truly
-        // static (§9). Re-evaluate frameloop='demand' in Phase 5.
+        // 'always' — evaluated against 'demand' in Phase 5 and kept (§9):
+        // the idle float is the product's living presence, so the scene
+        // renders every visible frame by design ('demand' saves nothing);
+        // hidden tabs already cost zero (the browser parks rAF, which
+        // stops gsap.ticker and this loop together). The one truly static
+        // case — reduced motion — would need the Director to call R3F's
+        // invalidate() across the chunk boundary after every pose write,
+        // a §10 violation, to save power for a cohort §13 doesn't measure.
         frameloop="always"
       >
         <Suspense fallback={null}>
           <StageScene />
           <StageReadySignal />
         </Suspense>
+        {/* Live tier degradation (Phase 5). Mounted only once the scene has
+            committed, so load-time jank (shader compiles, asset decode)
+            can never trigger a premature decline. */}
+        {stageReady ? <StagePerformance /> : null}
         {/* Tier gate (§3.8): post-processing is high-tier only, and the
             chunk request itself is behind the same gate. Outside the scene
             Suspense so a slow post download never delays stageReady. */}

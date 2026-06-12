@@ -3,8 +3,9 @@
  *
  * Classifies the device ONCE at boot into a quality tier; every expensive
  * feature reads its enablement from the tier (via useAppStore.qualityTier),
- * never decides locally. Runtime *degradation* (drei PerformanceMonitor)
- * is a Phase 5 deliverable and will lower the tier through the same store.
+ * never decides locally. Runtime *degradation* (stage/StagePerformance.tsx,
+ * drei PerformanceMonitor) lowers the tier through the same store —
+ * degrade-only, floored at 'low'.
  *
  * Pure module: no React, no Three — safe to import from the main chunk.
  */

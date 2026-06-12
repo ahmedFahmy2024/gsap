@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b",
+    "analyze": "vite build --sourcemap && bun scripts/analyze-bundle.mjs",
     "assets:optimize": "gltf-transform optimize assets-src/orbe.glb public/models/orbe.glb --compress meshopt --texture-compress ktx2",
     "preview": "vite preview"
   },
