@@ -52,6 +52,17 @@ a {
   color: var(--color-bg);
 }
 
+/* Scene backdrop — full-viewport tint behind the canvas; the Director
+   tweens its color per chapter (§5 environment state). Same z-layer as the
+   stage but earlier in the DOM, so the canvas paints above it. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-stage);
+  background: var(--color-bg);
+  pointer-events: none;
+}
+
 /* The 3D stage — one persistent fixed canvas behind the scrolling content
    (design §4). pointer-events stays off so the DOM owns all interaction;
    the fade-in fires once the stage's Suspense tree commits. */
@@ -88,6 +99,57 @@ a {
 @keyframes stage-progress-in {
   to {
     opacity: 1;
+  }
+}
+
+/* Annotations — drei <Html> labels pinned to model anchors (§7). The
+   Director gates visibility (descriptor visibleRange); occlusion adds the
+   same hidden state. Fade + slight drift, never a pop. They live inside
+   .stage, so they inherit pointer-events: none and sit below content. */
+.annotation {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  padding: 0.45em 0.95em;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: rgb(11 11 12 / 0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0.9rem, calc(-50% + 8px));
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease,
+    visibility 0s linear 0.45s;
+}
+
+.annotation--visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0.9rem, -50%);
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease,
+    visibility 0s;
+}
+
+.annotation__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 8px var(--color-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .annotation {
+    transition: none;
   }
 }
 

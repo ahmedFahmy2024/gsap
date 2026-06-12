@@ -20,10 +20,37 @@ export type StageObjectName =
   | 'cameraRig'
   /** Look-at target the camera tracks every frame (§3.4). */
   | 'lookAtTarget'
+  /** The PerspectiveCamera itself — fov tweens only; pose goes through the
+   *  rig + target, never camera quaternions (§3.4). */
+  | 'camera'
   /** Annotation anchors, e.g. 'anchor:ring' (§7). */
   | `anchor:${string}`;
 
 const stageObjects = new Map<StageObjectName, Object3D>();
+
+/* Change subscription so React consumers (the annotation layer) can resolve
+ * objects via useSyncExternalStore instead of effect-time polling — robust
+ * against late registration (e.g. a Suspense-loaded glTF committing after
+ * the consumer). The Director doesn't subscribe; it rebuilds on stageReady. */
+let registryVersion = 0;
+const listeners = new Set<() => void>();
+
+function notify(): void {
+  registryVersion += 1;
+  listeners.forEach((listener) => listener());
+}
+
+export function subscribeStageObjects(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/** Monotonic snapshot for useSyncExternalStore; bumps on every change. */
+export function getStageRegistryVersion(): number {
+  return registryVersion;
+}
 
 /**
  * Registers an object under a stable name. Returns the unregister function
@@ -35,9 +62,11 @@ export function registerStageObject(
   object: Object3D,
 ): () => void {
   stageObjects.set(name, object);
+  notify();
   return () => {
     if (stageObjects.get(name) === object) {
       stageObjects.delete(name);
+      notify();
     }
   };
 }

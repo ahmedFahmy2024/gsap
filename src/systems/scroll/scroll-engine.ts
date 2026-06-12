@@ -15,8 +15,21 @@ export interface ScrollEngineOptions {
 }
 
 export interface ScrollEngine {
-  scrollTo: (target: string) => void;
+  /** Selector string, or an absolute scroll position in px. */
+  scrollTo: (target: string | number) => void;
   destroy: () => void;
+}
+
+/**
+ * Scrub value for the master timeline (§6, encoded HERE so the asymmetry
+ * never gets sprinkled around): with a fine pointer, Lenis already lerps
+ * wheel input, so the scrub must be exact (`true`) — `scrub: 1` would
+ * double-smooth into a laggy, "drunk" feel. On touch-primary devices Lenis
+ * passes native momentum through untouched (syncTouch: false), so a small
+ * scrub lag is reintroduced for polish.
+ */
+export function getMasterScrub(): true | number {
+  return window.matchMedia('(pointer: coarse)').matches ? 0.5 : true;
 }
 
 /**
@@ -81,6 +94,10 @@ function createNativeEngine(): ScrollEngine {
 
   return {
     scrollTo: (target) => {
+      if (typeof target === 'number') {
+        window.scrollTo({ top: target, behavior: 'auto' });
+        return;
+      }
       document.querySelector(target)?.scrollIntoView({ behavior: 'auto' });
     },
     destroy: () => window.removeEventListener('scroll', onScroll),
@@ -95,8 +112,32 @@ export function setActiveEngine(engine: ScrollEngine | null): void {
   activeEngine = engine;
 }
 
-/** Scroll to a section by DOM id (e.g. from nav). Safe before init. */
+/**
+ * Maps a chapter id to its master-timeline label's scroll position, in px.
+ * Registered by the Director when it builds Layer 1 (the Director owns the
+ * timeline; this module owns the scrolling) and self-invalidates when the
+ * timeline is reverted, so a stale resolver just falls back to the DOM path.
+ */
+type LabelResolver = (id: string) => number | null;
+
+let labelResolver: LabelResolver | null = null;
+
+export function setLabelResolver(resolver: LabelResolver | null): void {
+  labelResolver = resolver;
+}
+
+/**
+ * Scroll to a chapter by id (e.g. from nav). Prefers the master-timeline
+ * label (lands exactly where the scene's pose settles); falls back to the
+ * DOM section when no timeline exists (reduced motion, static tier, or
+ * before init).
+ */
 export function scrollToSection(id: string): void {
+  const labelPosition = labelResolver?.(id) ?? null;
+  if (labelPosition !== null && activeEngine) {
+    activeEngine.scrollTo(labelPosition);
+    return;
+  }
   const selector = `#${id}`;
   if (activeEngine) {
     activeEngine.scrollTo(selector);

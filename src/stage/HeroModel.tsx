@@ -1,8 +1,10 @@
+import { ContactShadows } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import type { Group } from 'three';
 import type { ReactNode } from 'react';
 import { useAppStore } from '../state/store';
+import { renderProfiles } from '../systems/quality/quality';
 import { registerStageObject } from './registry/registry';
 
 /*
@@ -15,10 +17,17 @@ const METAL_COLOR = '#cfc9c0';
 const BASE_COLOR = '#1b1b1e';
 const ACCENT_COLOR = '#e8602c';
 
-/** Idle float (§6 Layer 3) — small, slow, and delta/elapsed-based. */
+/**
+ * Idle float (§6 Layer 3) — small, slow, elapsed-based. All three axes are
+ * bounded oscillations: Phase 3's Director authors specific yaw framings
+ * (and anchors annotations to physical points), so the Phase 2 unbounded
+ * yaw drift would slowly walk the presented face — and the labels — away
+ * from the choreography. Sway composes; drift fights (§6 Layer 3).
+ */
 const FLOAT_BOB_AMPLITUDE = 0.05;
 const FLOAT_BOB_SPEED = 0.9;
-const FLOAT_YAW_SPEED = 0.12;
+const FLOAT_YAW_AMPLITUDE = 0.06;
+const FLOAT_YAW_SPEED = 0.22;
 const FLOAT_ROLL_AMPLITUDE = 0.015;
 const FLOAT_ROLL_SPEED = 0.6;
 
@@ -31,12 +40,19 @@ const FLOAT_ROLL_SPEED = 0.6;
  * pipeline) — the registered names and anchor contract stay identical.
  *
  * Structure (one writer per property, §8):
- *   heroGroup (registered)  — Director-owned pose, scrubbed in Phase 3
- *   └─ heroFloat (registered) — idle-float wrapper, frame-loop-owned
- *      └─ meshes + anchors
+ *   heroGroup (registered)  — Director-owned pose, scrubbed by Layer 1
+ *   ├─ heroFloat (registered) — idle-float wrapper, frame-loop-owned
+ *   │  └─ meshes + anchors
+ *   └─ contact shadow — inside heroGroup so it travels/scales with the
+ *      choreographed pose (and why descriptor rotation is yaw-only: pitch
+ *      or roll would tilt the ground plane), but outside heroFloat so the
+ *      idle bob floats *above* it.
  */
 export function HeroModel() {
   const hero = useRef<Group>(null);
+  const qualityTier = useAppStore((s) => s.qualityTier);
+  const profile =
+    qualityTier === 'static' ? renderProfiles.low : renderProfiles[qualityTier];
 
   useEffect(() => registerStageObject('heroGroup', hero.current!), []);
 
@@ -104,6 +120,19 @@ export function HeroModel() {
         <Anchor name="anchor:ring" position={[0, 0.85, 0]} />
         <Anchor name="anchor:grille" position={[0, 0, 1.02]} />
       </FloatGroup>
+
+      {/* Grounding (§9): baked-style contact shadow, rendered once — no
+          real-time shadow maps anywhere on the stage. */}
+      <ContactShadows
+        position={[0, -1.3, 0]}
+        opacity={0.55}
+        scale={7}
+        blur={2.4}
+        far={2.4}
+        resolution={profile.shadowResolution}
+        frames={1}
+        color="#000000"
+      />
     </group>
   );
 }
@@ -111,8 +140,8 @@ export function HeroModel() {
 /**
  * Additive idle motion on its own wrapper group so it composes with — and
  * never fights — the Director's scrubbed pose on heroGroup (§6 Layer 3).
- * Bob/roll derive from elapsed time, yaw drift from delta, so the motion
- * is frame-rate independent (iOS Low Power Mode caps rAF at 30 fps, §12).
+ * Everything derives from elapsed time, so the motion is frame-rate
+ * independent (iOS Low Power Mode caps rAF at 30 fps, §12).
  */
 function FloatGroup({ children }: { children: ReactNode }) {
   const float = useRef<Group>(null);
@@ -124,11 +153,12 @@ function FloatGroup({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (reducedMotion && float.current) {
       float.current.position.y = 0;
+      float.current.rotation.y = 0;
       float.current.rotation.z = 0;
     }
   }, [reducedMotion]);
 
-  useFrame((state, delta) => {
+  useFrame((state) => {
     if (reducedMotion) {
       return;
     }
@@ -136,7 +166,8 @@ function FloatGroup({ children }: { children: ReactNode }) {
     const elapsed = state.clock.elapsedTime;
     group.position.y =
       Math.sin(elapsed * FLOAT_BOB_SPEED) * FLOAT_BOB_AMPLITUDE;
-    group.rotation.y += delta * FLOAT_YAW_SPEED;
+    group.rotation.y =
+      Math.sin(elapsed * FLOAT_YAW_SPEED) * FLOAT_YAW_AMPLITUDE;
     group.rotation.z =
       Math.sin(elapsed * FLOAT_ROLL_SPEED + 1.7) * FLOAT_ROLL_AMPLITUDE;
   });

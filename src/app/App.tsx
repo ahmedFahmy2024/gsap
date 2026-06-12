@@ -21,6 +21,9 @@ export default function App() {
     <div ref={pageRef}>
       <SiteHeader />
       <ChapterIndicator />
+      {/* Scene environment tint (§5) — the Director tweens its color on the
+          master timeline. Before <StageMount /> so the canvas paints above. */}
+      <div className="backdrop" data-backdrop aria-hidden="true" />
       {/* The fixed 3D stage — at --z-stage, behind the scrolling content */}
       <StageMount />
       <main>

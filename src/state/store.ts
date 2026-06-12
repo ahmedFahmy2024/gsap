@@ -27,11 +27,20 @@ interface AppState {
   stageReady: boolean;
   /** 3D asset loading progress 0–100, mirrored out of the stage chunk. */
   stageProgress: number;
+  /**
+   * Ids of annotations currently inside their descriptor visibleRange.
+   * Written by the Director's annotation triggers (boundary-cross frequency,
+   * like currentChapter — within the §8 rules); read reactively by the
+   * stage's annotation labels.
+   */
+  visibleAnnotations: string[];
   setReducedMotion: (value: boolean) => void;
   setCurrentChapter: (index: number) => void;
   setQualityTier: (tier: QualityTier) => void;
   setStageReady: (value: boolean) => void;
   setStageProgress: (value: number) => void;
+  setAnnotationVisible: (id: string, visible: boolean) => void;
+  clearAnnotations: () => void;
 }
 
 export const useAppStore = create<AppState>()((set) => ({
@@ -40,11 +49,28 @@ export const useAppStore = create<AppState>()((set) => ({
   qualityTier: classifyQuality(),
   stageReady: false,
   stageProgress: 0,
+  visibleAnnotations: [],
   setReducedMotion: (value) => set({ reducedMotion: value }),
   setCurrentChapter: (index) => set({ currentChapter: index }),
   setQualityTier: (tier) => set({ qualityTier: tier }),
   setStageReady: (value) => set({ stageReady: value }),
   setStageProgress: (value) => set({ stageProgress: value }),
+  setAnnotationVisible: (id, visible) =>
+    set((state) => {
+      const has = state.visibleAnnotations.includes(id);
+      if (visible === has) {
+        return state; // no-op writes must not re-render subscribers
+      }
+      return {
+        visibleAnnotations: visible
+          ? [...state.visibleAnnotations, id]
+          : state.visibleAnnotations.filter((other) => other !== id),
+      };
+    }),
+  clearAnnotations: () =>
+    set((state) =>
+      state.visibleAnnotations.length ? { visibleAnnotations: [] } : state,
+    ),
 }));
 
 interface TransientState {
