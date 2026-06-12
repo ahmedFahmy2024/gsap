@@ -7,6 +7,8 @@ export function HeroSection() {
       data-section
       className="section hero"
       aria-label={heroContent.tagline}
+      // Focus target for nav (navigateToSection) — never in tab order.
+      tabIndex={-1}
     >
       <div className="container section__copy">
         <h1 className="display" data-reveal>

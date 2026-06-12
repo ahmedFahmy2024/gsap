@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "analyze": "vite build --sourcemap && bun scripts/analyze-bundle.mjs",
+    "assets:og": "bun scripts/generate-og-image.mjs",
     "assets:optimize": "gltf-transform optimize assets-src/orbe.glb public/models/orbe.glb --compress meshopt --texture-compress ktx2",
     "preview": "vite preview"
   },
@@ -22,6 +23,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "three": "^0.184.0",
+    "web-vitals": "^5.3.0",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

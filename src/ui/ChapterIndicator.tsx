@@ -1,6 +1,6 @@
 import { chapters } from '../story/sections';
 import { useAppStore } from '../state/store';
-import { scrollToSection } from '../systems/scroll/scroll-engine';
+import { navigateToSection } from './navigation';
 
 /**
  * Fixed progress dots. Subscribes to currentChapter — a deliberate,
@@ -17,8 +17,10 @@ export function ChapterIndicator() {
           type="button"
           className="chapters__dot"
           aria-label={chapter.label}
-          aria-current={index === currentChapter}
-          onClick={() => scrollToSection(chapter.id)}
+          // 'true'/undefined, not true/false: a literal aria-current="false"
+          // on every other dot is noise for AT (Phase 6 aria audit).
+          aria-current={index === currentChapter ? 'true' : undefined}
+          onClick={() => navigateToSection(chapter.id)}
         />
       ))}
     </nav>

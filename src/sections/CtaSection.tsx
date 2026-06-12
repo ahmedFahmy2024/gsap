@@ -1,4 +1,5 @@
 import { ctaContent } from '../story/sections';
+import { track } from '../systems/analytics/analytics';
 import { MagneticButton } from '../ui/MagneticButton';
 
 export function CtaSection() {
@@ -8,6 +9,8 @@ export function CtaSection() {
       data-section
       className="section cta"
       aria-labelledby={`${ctaContent.id}-title`}
+      // Focus target for nav (navigateToSection) — never in tab order.
+      tabIndex={-1}
     >
       <div className="container section__copy">
         <p className="eyebrow" data-reveal>
@@ -20,10 +23,16 @@ export function CtaSection() {
           {ctaContent.body}
         </p>
         <div data-reveal>
-          <MagneticButton className="button">
+          <MagneticButton
+            className="button"
+            onClick={() => track('cta_click', { cta: 'reserve' })}
+          >
             {ctaContent.primaryAction}
           </MagneticButton>{' '}
-          <MagneticButton className="button button--ghost">
+          <MagneticButton
+            className="button button--ghost"
+            onClick={() => track('cta_click', { cta: 'find-room' })}
+          >
             {ctaContent.secondaryAction}
           </MagneticButton>
         </div>

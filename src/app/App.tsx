@@ -6,6 +6,7 @@ import { StorySection } from '../sections/StorySection';
 import { usePointerSync } from '../hooks/usePointerSync';
 import { useReducedMotionSync } from '../hooks/useReducedMotionSync';
 import { storySections } from '../story/sections';
+import { useAnalytics } from '../systems/analytics/useAnalytics';
 import { useDirector } from '../systems/director/useDirector';
 import { useScrollEngine } from '../systems/scroll/useScrollEngine';
 import { ChapterIndicator } from '../ui/ChapterIndicator';
@@ -18,9 +19,15 @@ export default function App() {
   usePointerSync();
   useScrollEngine();
   useDirector(pageRef);
+  useAnalytics();
 
   return (
     <div ref={pageRef}>
+      {/* First focusable on the page (Phase 6 a11y). Native anchor jump —
+          instant, and Lenis keeps native scroll behavior intact (§6). */}
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <SiteHeader />
       <ChapterIndicator />
       {/* Scene environment tint (§5) — the Director tweens its color on the
@@ -28,7 +35,7 @@ export default function App() {
       <div className="backdrop" data-backdrop aria-hidden="true" />
       {/* The fixed 3D stage — at --z-stage, behind the scrolling content */}
       <StageMount />
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <HeroSection />
         {storySections.map((content) => (
           <StorySection key={content.id} content={content} />

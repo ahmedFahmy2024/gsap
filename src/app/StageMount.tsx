@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { useAppStore } from '../state/store';
+import { StageErrorBoundary } from './StageErrorBoundary';
 
 // The ONLY entry into stage/ from the app shell, and it is dynamic: Three,
 // R3F, and drei live in this lazy chunk; the shell (React + GSAP + Lenis)
@@ -13,6 +14,7 @@ const StageCanvas = lazy(() => import('../stage/StageCanvas'));
  */
 export function StageMount() {
   const qualityTier = useAppStore((s) => s.qualityTier);
+  const stageGeneration = useAppStore((s) => s.stageGeneration);
 
   if (qualityTier === 'static') {
     return null;
@@ -21,9 +23,15 @@ export function StageMount() {
   return (
     <>
       <StageLoadingBar />
-      <Suspense fallback={null}>
-        <StageCanvas />
-      </Suspense>
+      {/* Phase 6 resilience: the boundary demotes to 'static' on any render
+          error inside the stage; the generation key remounts the canvas
+          after a restored WebGL context (render-once bakes don't survive a
+          context swap — see StageContextGuard). */}
+      <StageErrorBoundary>
+        <Suspense fallback={null}>
+          <StageCanvas key={stageGeneration} />
+        </Suspense>
+      </StageErrorBoundary>
     </>
   );
 }

@@ -25,6 +25,13 @@ interface AppState {
   qualityTier: QualityTier;
   /** True once the stage's Suspense tree has committed (canvas fade-in). */
   stageReady: boolean;
+  /**
+   * Remount key for the stage canvas (Phase 6 resilience). Bumped by the
+   * context-loss guard when the browser RESTORES a lost WebGL context: the
+   * render-once resources (baked env map, contact shadows) do not survive a
+   * context swap, so the whole canvas re-creates instead of resuming blank.
+   */
+  stageGeneration: number;
   /** 3D asset loading progress 0–100, mirrored out of the stage chunk. */
   stageProgress: number;
   /**
@@ -38,6 +45,7 @@ interface AppState {
   setCurrentChapter: (index: number) => void;
   setQualityTier: (tier: QualityTier) => void;
   setStageReady: (value: boolean) => void;
+  bumpStageGeneration: () => void;
   setStageProgress: (value: number) => void;
   setAnnotationVisible: (id: string, visible: boolean) => void;
   clearAnnotations: () => void;
@@ -48,12 +56,15 @@ export const useAppStore = create<AppState>()((set) => ({
   currentChapter: 0,
   qualityTier: classifyQuality(),
   stageReady: false,
+  stageGeneration: 0,
   stageProgress: 0,
   visibleAnnotations: [],
   setReducedMotion: (value) => set({ reducedMotion: value }),
   setCurrentChapter: (index) => set({ currentChapter: index }),
   setQualityTier: (tier) => set({ qualityTier: tier }),
   setStageReady: (value) => set({ stageReady: value }),
+  bumpStageGeneration: () =>
+    set((state) => ({ stageGeneration: state.stageGeneration + 1 })),
   setStageProgress: (value) => set({ stageProgress: value }),
   setAnnotationVisible: (id, visible) =>
     set((state) => {

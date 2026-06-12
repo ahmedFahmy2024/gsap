@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Suspense, lazy, useEffect } from 'react';
 import { useAppStore } from '../state/store';
 import { renderProfiles } from '../systems/quality/quality';
+import { StageContextGuard } from './StageContextGuard';
 import { StagePerformance } from './StagePerformance';
 import { StageScene } from './StageScene';
 
@@ -61,6 +62,9 @@ export default function StageCanvas() {
           <StageScene />
           <StageReadySignal />
         </Suspense>
+        {/* Context-loss resilience (Phase 6) — outside the scene Suspense:
+            a context can be lost while assets are still streaming. */}
+        <StageContextGuard />
         {/* Live tier degradation (Phase 5). Mounted only once the scene has
             committed, so load-time jank (shader compiles, asset decode)
             can never trigger a premature decline. */}

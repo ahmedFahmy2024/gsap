@@ -2,17 +2,62 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ORBE — Sound, sculpted</title>
     <meta
       name="description"
-      content="ORBE — sound, sculpted. A scroll-driven 3D product story."
+      content="ORBE — sound, sculpted. A sculptural 360° speaker milled from a single block of recycled aluminium. Scroll the story."
     />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#0b0b0c" />
-    <title>ORBE — Sound, sculpted</title>
+
+    <!-- Social cards (Phase 6). og:url / og:image / canonical must be
+         absolute per spec; https://orbe.example.com is a PLACEHOLDER —
+         replace with the real origin at deploy (docs/PHASE_6_HANDOFF.md). -->
+    <link rel="canonical" href="https://orbe.example.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ORBE" />
+    <meta property="og:title" content="ORBE — Sound, sculpted" />
+    <meta
+      property="og:description"
+      content="A sculptural 360° speaker milled from a single block of recycled aluminium. Scroll the story."
+    />
+    <meta property="og:url" content="https://orbe.example.com/" />
+    <meta property="og:image" content="https://orbe.example.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="The ORBE wordmark beside a sculpted aluminium speaker sphere on a dark stage"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ORBE — Sound, sculpted" />
+    <meta
+      name="twitter:description"
+      content="A sculptural 360° speaker milled from a single block of recycled aluminium. Scroll the story."
+    />
+    <meta name="twitter:image" content="https://orbe.example.com/og.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "ORBE",
+        "description": "A sculptural 360° speaker milled from a single block of recycled aluminium.",
+        "image": "https://orbe.example.com/og.png",
+        "brand": { "@type": "Brand", "name": "ORBE" }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <p style="margin: 40vh auto; max-width: 32rem; text-align: center">
+        ORBE — sound, sculpted. This story is told with JavaScript; please
+        enable it to scroll the experience.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

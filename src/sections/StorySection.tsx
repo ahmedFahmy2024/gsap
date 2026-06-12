@@ -20,6 +20,8 @@ export function StorySection({ content }: { content: SectionContent }) {
       data-section
       className={`section ${stageClass}`}
       aria-labelledby={`${content.id}-title`}
+      // Focus target for nav (navigateToSection) — never in tab order.
+      tabIndex={-1}
     >
       <div className="container">
         <div className="section__copy">

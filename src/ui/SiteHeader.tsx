@@ -1,5 +1,5 @@
 import { heroContent, chapters } from '../story/sections';
-import { scrollToSection } from '../systems/scroll/scroll-engine';
+import { navigateToSection } from './navigation';
 
 export function SiteHeader() {
   return (
@@ -7,7 +7,7 @@ export function SiteHeader() {
       <button
         type="button"
         className="site-header__wordmark"
-        onClick={() => scrollToSection(heroContent.id)}
+        onClick={() => navigateToSection(heroContent.id)}
       >
         {heroContent.title}
       </button>
@@ -16,7 +16,7 @@ export function SiteHeader() {
           <button
             key={chapter.id}
             type="button"
-            onClick={() => scrollToSection(chapter.id)}
+            onClick={() => navigateToSection(chapter.id)}
           >
             {chapter.label}
           </button>

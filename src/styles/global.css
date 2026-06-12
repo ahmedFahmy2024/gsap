@@ -47,6 +47,33 @@ a {
   outline-offset: 3px;
 }
 
+/* Programmatic focus targets (sections, main) — focusable for the nav
+   focus hand-off, but a viewport-sized outline is noise, and the move is
+   already announced via the section's accessible name. */
+[tabindex='-1']:focus,
+[tabindex='-1']:focus-visible {
+  outline: none;
+}
+
+/* Skip link — first focusable element; visually hidden until focused */
+.skip-link {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: var(--z-chrome);
+  padding: 0.6em 1.2em;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  font-weight: 600;
+  transform: translateY(calc(-100% - var(--space-4)));
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus-visible {
+  transform: none;
+}
+
 ::selection {
   background: var(--color-accent);
   color: var(--color-bg);
@@ -129,6 +156,21 @@ a {
   }
 
   .stage-progress__bar {
+    transition: none;
+  }
+
+  /* Phase 6 reduced-motion audit: the canvas appears instead of fading in,
+     and chrome transitions (dots, skip link) are stripped — content parity,
+     zero animation (§13). */
+  .stage {
+    transition: none;
+  }
+
+  .chapters__dot {
+    transition: none;
+  }
+
+  .skip-link {
     transition: none;
   }
 }
