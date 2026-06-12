@@ -11,6 +11,10 @@ const StageDevTools = import.meta.env.DEV
   ? lazy(() => import('./StageDevTools'))
   : null;
 
+// Post chunk (§11 Phase 4): bloom/grain/vignette. Lazy so `postprocessing`
+// is a separate download that only the high tier ever requests.
+const StageEffects = lazy(() => import('./StageEffects'));
+
 /**
  * The single persistent canvas (design §4): position-fixed at --z-stage,
  * full viewport, pointer-events:none, never unmounted. Lazy-loaded as its
@@ -50,6 +54,14 @@ export default function StageCanvas() {
           <StageScene />
           <StageReadySignal />
         </Suspense>
+        {/* Tier gate (§3.8): post-processing is high-tier only, and the
+            chunk request itself is behind the same gate. Outside the scene
+            Suspense so a slow post download never delays stageReady. */}
+        {qualityTier === 'high' ? (
+          <Suspense fallback={null}>
+            <StageEffects />
+          </Suspense>
+        ) : null}
         {StageDevTools ? (
           <Suspense fallback={null}>
             <StageDevTools />

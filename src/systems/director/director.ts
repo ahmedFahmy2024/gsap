@@ -1,6 +1,12 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import type { Object3D, PerspectiveCamera } from 'three';
+import type {
+  Material,
+  MeshPhysicalMaterial,
+  MeshStandardMaterial,
+  Object3D,
+  PerspectiveCamera,
+} from 'three';
 import { useAppStore } from '../../state/store';
 import { ease, duration, stagger, revealDistance } from '../../story/motion';
 import {
@@ -16,6 +22,7 @@ import {
 import { chapters } from '../../story/sections';
 import { validateStory } from '../../story/validate';
 import {
+  getStageHandle,
   getStageObject,
   listStageObjects,
 } from '../../stage/registry/registry';
@@ -41,6 +48,12 @@ interface StageTargets {
   look: Object3D;
   camera: PerspectiveCamera | undefined;
   backdrop: HTMLElement | null;
+  /** Material handles for the Phase-4 environment choreography. Optional —
+   *  a tier that mounts no particles simply registers no handle. */
+  body: MeshPhysicalMaterial | undefined;
+  ring: MeshStandardMaterial | undefined;
+  led: MeshStandardMaterial | undefined;
+  particles: Material | undefined;
 }
 
 /**
@@ -221,10 +234,12 @@ function buildMasterTimeline(
 
 /**
  * One scene's pose as tweens on the registry objects — heroGroup, cameraRig,
- * lookAtTarget, camera fov, plus the DOM backdrop tint. Never heroFloat:
+ * lookAtTarget, camera fov, the DOM backdrop tint, and (Phase 4) the
+ * material color story through the registry handles. Never heroFloat:
  * the idle wrapper stays frame-loop-owned (§6 Layer 3, one writer per
  * property §8). All spatial values are function-based so every refresh
- * re-resolves normalized stage space against the live viewport.
+ * re-resolves normalized stage space against the live viewport; material
+ * and environment values are scalars and need no re-resolution.
  */
 function addPoseTweens(
   timeline: gsap.core.Timeline,
@@ -281,6 +296,30 @@ function addPoseTweens(
       at,
     );
   }
+
+  // Material choreography (Phase 4): the environment color story rides the
+  // same scrub, so the mood is as scrub-deterministic as the pose.
+  const env = scene.environment;
+  if (targets.body) {
+    timeline.to(
+      targets.body,
+      { sheen: env.sheen, envMapIntensity: env.bodyEnv, ...shared },
+      at,
+    );
+    const sheenRgb = linearRgb(env.sheenColor);
+    if (sheenRgb) {
+      timeline.to(targets.body.sheenColor, { ...sheenRgb, ...shared }, at);
+    }
+  }
+  if (targets.ring) {
+    timeline.to(targets.ring, { envMapIntensity: env.ringEnv, ...shared }, at);
+  }
+  if (targets.led) {
+    timeline.to(targets.led, { emissiveIntensity: env.led, ...shared }, at);
+  }
+  if (targets.particles) {
+    timeline.to(targets.particles, { opacity: env.particles, ...shared }, at);
+  }
 }
 
 /** Reduced-motion framing: the hero scene's pose applied once, statically.
@@ -313,6 +352,24 @@ function applyRestingPose(scene: SceneDescriptor, targets: StageTargets): void {
     gsap.set(targets.backdrop, {
       backgroundColor: scene.environment.backdrop,
     });
+  }
+
+  const env = scene.environment;
+  if (targets.body) {
+    gsap.set(targets.body, { sheen: env.sheen, envMapIntensity: env.bodyEnv });
+    const sheenRgb = linearRgb(env.sheenColor);
+    if (sheenRgb) {
+      gsap.set(targets.body.sheenColor, sheenRgb);
+    }
+  }
+  if (targets.ring) {
+    gsap.set(targets.ring, { envMapIntensity: env.ringEnv });
+  }
+  if (targets.led) {
+    gsap.set(targets.led, { emissiveIntensity: env.led });
+  }
+  if (targets.particles) {
+    gsap.set(targets.particles, { opacity: env.particles });
   }
 }
 
@@ -351,6 +408,10 @@ function resolveStageTargets(
     look,
     camera: getStageObject('camera') as PerspectiveCamera | undefined,
     backdrop: scope.querySelector<HTMLElement>('[data-backdrop]'),
+    body: getStageHandle('material:body') as MeshPhysicalMaterial | undefined,
+    ring: getStageHandle('material:ring') as MeshStandardMaterial | undefined,
+    led: getStageHandle('material:led') as MeshStandardMaterial | undefined,
+    particles: getStageHandle('material:particles'),
   };
 }
 
@@ -464,6 +525,36 @@ function heroScale(scene: SceneDescriptor): () => number {
   return () =>
     scene.hero.scale *
     Math.min(1, stageWorldSize().width / stageSpace.heroDesignWidth);
+}
+
+/**
+ * sRGB hex → linear-space r/g/b fractions, the channels GSAP tweens on a
+ * three Color. Three's color management stores material colors in
+ * linear-sRGB working space (a hex set via JSX is converted on assignment),
+ * so tween TARGETS must be converted with the same transfer function — done
+ * here in pure math because the Director must not value-import three (§3.3:
+ * the registry keeps Three.js out of the main chunk).
+ */
+function linearRgb(
+  hex: string,
+): { r: number; g: number; b: number } | null {
+  const match = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!match) {
+    if (import.meta.env.DEV) {
+      console.warn(`[director] "${hex}" is not a #rrggbb color; skipping`);
+    }
+    return null;
+  }
+  const toLinear = (byte: number) => {
+    const c = byte / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const value = parseInt(match[1], 16);
+  return {
+    r: toLinear((value >> 16) & 0xff),
+    g: toLinear((value >> 8) & 0xff),
+    b: toLinear(value & 0xff),
+  };
 }
 
 /** Document-space top of an element. Computed from layout offsets, not from

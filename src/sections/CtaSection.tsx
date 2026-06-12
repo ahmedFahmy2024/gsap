@@ -1,4 +1,5 @@
 import { ctaContent } from '../story/sections';
+import { MagneticButton } from '../ui/MagneticButton';
 
 export function CtaSection() {
   return (
@@ -19,12 +20,12 @@ export function CtaSection() {
           {ctaContent.body}
         </p>
         <div data-reveal>
-          <button type="button" className="button">
+          <MagneticButton className="button">
             {ctaContent.primaryAction}
-          </button>{' '}
-          <button type="button" className="button button--ghost">
+          </MagneticButton>{' '}
+          <MagneticButton className="button button--ghost">
             {ctaContent.secondaryAction}
-          </button>
+          </MagneticButton>
         </div>
       </div>
     </section>

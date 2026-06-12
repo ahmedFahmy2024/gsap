@@ -1,11 +1,17 @@
 import { ContactShadows } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
-import type { Group } from 'three';
+import type {
+  Group,
+  MeshPhysicalMaterial,
+  MeshStandardMaterial,
+} from 'three';
 import type { ReactNode } from 'react';
 import { useAppStore } from '../state/store';
+import { scenes } from '../story/scenes';
 import { renderProfiles } from '../systems/quality/quality';
-import { registerStageObject } from './registry/registry';
+import { registerStageHandle, registerStageObject } from './registry/registry';
+import { SoundField } from './SoundField';
 
 /*
  * Material palette — echoes styles/tokens.css (--color-accent #e8602c,
@@ -16,6 +22,15 @@ const GRILLE_COLOR = '#121215';
 const METAL_COLOR = '#cfc9c0';
 const BASE_COLOR = '#1b1b1e';
 const ACCENT_COLOR = '#e8602c';
+
+/*
+ * Choreographed material values boot at the hero scene's environment, the
+ * same trick CameraRig uses for its resting pose: the pre-scroll frame and
+ * the Director's scrubbed t=0 frame are then identical by construction.
+ * The non-zero sheen here is also what keeps the sheen shader path compiled
+ * from the first program build (see EnvironmentState's compile-once note).
+ */
+const restingEnv = scenes[0].environment;
 
 /**
  * Idle float (§6 Layer 3) — small, slow, elapsed-based. All three axes are
@@ -50,11 +65,24 @@ const FLOAT_ROLL_SPEED = 0.6;
  */
 export function HeroModel() {
   const hero = useRef<Group>(null);
+  const bodyMaterial = useRef<MeshPhysicalMaterial>(null);
+  const ringMaterial = useRef<MeshStandardMaterial>(null);
+  const ledMaterial = useRef<MeshStandardMaterial>(null);
   const qualityTier = useAppStore((s) => s.qualityTier);
   const profile =
     qualityTier === 'static' ? renderProfiles.low : renderProfiles[qualityTier];
 
   useEffect(() => registerStageObject('heroGroup', hero.current!), []);
+
+  // Material handles for the Director's environment choreography (Phase 4).
+  useEffect(() => {
+    const unregister = [
+      registerStageHandle('material:body', bodyMaterial.current!),
+      registerStageHandle('material:ring', ringMaterial.current!),
+      registerStageHandle('material:led', ledMaterial.current!),
+    ];
+    return () => unregister.forEach((fn) => fn());
+  }, []);
 
   return (
     <group ref={hero} position={[0, 0.06, 0]}>
@@ -64,12 +92,16 @@ export function HeroModel() {
           <mesh>
             <sphereGeometry args={[1, 96, 64]} />
             <meshPhysicalMaterial
+              ref={bodyMaterial}
               color={BODY_COLOR}
               roughness={0.32}
               metalness={0.05}
               clearcoat={1}
               clearcoatRoughness={0.18}
-              envMapIntensity={1.1}
+              envMapIntensity={restingEnv.bodyEnv}
+              sheen={restingEnv.sheen}
+              sheenColor={restingEnv.sheenColor}
+              sheenRoughness={0.55}
             />
           </mesh>
           {/* Grille — matte front cap (sphere cap rotated to face +z) */}
@@ -87,10 +119,11 @@ export function HeroModel() {
         <mesh position={[0, 0.85, 0]} rotation-x={Math.PI / 2}>
           <torusGeometry args={[0.42, 0.045, 24, 96]} />
           <meshStandardMaterial
+            ref={ringMaterial}
             color={METAL_COLOR}
             metalness={1}
             roughness={0.28}
-            envMapIntensity={1.2}
+            envMapIntensity={restingEnv.ringEnv}
           />
         </mesh>
 
@@ -98,9 +131,10 @@ export function HeroModel() {
         <mesh position={[0, -0.32, 0.945]}>
           <sphereGeometry args={[0.018, 16, 16]} />
           <meshStandardMaterial
+            ref={ledMaterial}
             color="#000000"
             emissive={ACCENT_COLOR}
-            emissiveIntensity={4}
+            emissiveIntensity={restingEnv.led}
           />
         </mesh>
 
@@ -120,6 +154,11 @@ export function HeroModel() {
         <Anchor name="anchor:ring" position={[0, 0.85, 0]} />
         <Anchor name="anchor:grille" position={[0, 0, 1.02]} />
       </FloatGroup>
+
+      {/* Soundfield (Phase 4) — inside heroGroup so the field travels with
+          the choreographed pose, outside heroFloat so 900 points don't get
+          a matrix update from every idle bob. */}
+      <SoundField />
 
       {/* Grounding (§9): baked-style contact shadow, rendered once — no
           real-time shadow maps anywhere on the stage. */}

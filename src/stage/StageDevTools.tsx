@@ -1,6 +1,10 @@
 import { useControls } from 'leva';
 import { Perf } from 'r3f-perf';
-import { getStageObject } from './registry/registry';
+import type {
+  MeshPhysicalMaterial,
+  MeshStandardMaterial,
+} from 'three';
+import { getStageHandle, getStageObject } from './registry/registry';
 
 /**
  * Dev-only tuning surface (design §11 Phase 2: Leva panel + r3f-perf).
@@ -43,6 +47,75 @@ export default function StageDevTools() {
         const hero = getStageObject('heroGroup');
         if (hero) {
           hero.position.x = value;
+        }
+      },
+    },
+  });
+
+  // Color-story tuning (Phase 4). Same caveat as poses: while the master
+  // scrub is active, any scroll re-asserts the scrubbed values — tune while
+  // stationary, then copy values into scenes.ts environment blocks.
+  useControls('materials', {
+    led: {
+      value: 4,
+      min: 0,
+      max: 10,
+      onChange: (value: number) => {
+        const led = getStageHandle('material:led') as
+          | MeshStandardMaterial
+          | undefined;
+        if (led) {
+          led.emissiveIntensity = value;
+        }
+      },
+    },
+    sheen: {
+      value: 0.12,
+      min: 0.01,
+      max: 1,
+      onChange: (value: number) => {
+        const body = getStageHandle('material:body') as
+          | MeshPhysicalMaterial
+          | undefined;
+        if (body) {
+          body.sheen = value;
+        }
+      },
+    },
+    sheenColor: {
+      value: '#566070',
+      onChange: (value: string) => {
+        const body = getStageHandle('material:body') as
+          | MeshPhysicalMaterial
+          | undefined;
+        if (body) {
+          body.sheenColor.set(value);
+        }
+      },
+    },
+    bodyEnv: {
+      value: 1.1,
+      min: 0.1,
+      max: 4,
+      onChange: (value: number) => {
+        const body = getStageHandle('material:body') as
+          | MeshPhysicalMaterial
+          | undefined;
+        if (body) {
+          body.envMapIntensity = value;
+        }
+      },
+    },
+    ringEnv: {
+      value: 1.2,
+      min: 0.1,
+      max: 4,
+      onChange: (value: number) => {
+        const ring = getStageHandle('material:ring') as
+          | MeshStandardMaterial
+          | undefined;
+        if (ring) {
+          ring.envMapIntensity = value;
         }
       },
     },

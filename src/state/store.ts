@@ -78,9 +78,16 @@ interface TransientState {
   scrollProgress: number;
   /** Scroll velocity as reported by the scroll engine, px/frame-ish. */
   scrollVelocity: number;
+  /** Mouse position, viewport-normalized to -1…1, +x right. 0 until the
+   *  first move; written by usePointerSync, read by CameraRig's parallax. */
+  pointerX: number;
+  /** -1…1, +y UP (screen-flipped so it matches world space). */
+  pointerY: number;
 }
 
 export const transientStore = createStore<TransientState>()(() => ({
   scrollProgress: 0,
   scrollVelocity: 0,
+  pointerX: 0,
+  pointerY: 0,
 }));

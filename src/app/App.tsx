@@ -3,6 +3,7 @@ import { StageMount } from './StageMount';
 import { CtaSection } from '../sections/CtaSection';
 import { HeroSection } from '../sections/HeroSection';
 import { StorySection } from '../sections/StorySection';
+import { usePointerSync } from '../hooks/usePointerSync';
 import { useReducedMotionSync } from '../hooks/useReducedMotionSync';
 import { storySections } from '../story/sections';
 import { useDirector } from '../systems/director/useDirector';
@@ -14,6 +15,7 @@ export default function App() {
   const pageRef = useRef<HTMLDivElement>(null);
 
   useReducedMotionSync();
+  usePointerSync();
   useScrollEngine();
   useDirector(pageRef);
 

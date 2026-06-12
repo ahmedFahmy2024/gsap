@@ -1,4 +1,4 @@
-import type { Object3D } from 'three';
+import type { Material, Object3D } from 'three';
 
 /**
  * Named ref registry — the ONLY Stage↔Director contract
@@ -78,4 +78,45 @@ export function getStageObject(name: StageObjectName): Object3D | undefined {
 /** Diagnostic helper for dev tools / descriptor validation (Phase 3). */
 export function listStageObjects(): StageObjectName[] {
   return [...stageObjects.keys()];
+}
+
+/* ------------------------------------------------------------------ *
+ * Material handles (Phase 4 — §11 material/uniform choreography)      *
+ * ------------------------------------------------------------------ */
+
+/**
+ * Materials the Director tweens on the master timeline (environment color
+ * story). Same contract as objects — stage registers, Director mutates —
+ * kept in a separate map because materials aren't Object3Ds.
+ */
+export type StageHandleName =
+  /** Enclosure MeshPhysicalMaterial: sheen rim accent + envMapIntensity. */
+  | 'material:body'
+  /** Status-LED MeshStandardMaterial: emissiveIntensity (bloom feeds on it). */
+  | 'material:led'
+  /** Volume-ring MeshStandardMaterial: envMapIntensity. */
+  | 'material:ring'
+  /** Soundfield PointsMaterial: opacity (the tier-gated particle moment). */
+  | 'material:particles';
+
+const stageHandles = new Map<StageHandleName, Material>();
+
+/** Mount → register, unmount → unregister; shares the object notify channel
+ *  (registration frequency, not per-frame). */
+export function registerStageHandle(
+  name: StageHandleName,
+  handle: Material,
+): () => void {
+  stageHandles.set(name, handle);
+  notify();
+  return () => {
+    if (stageHandles.get(name) === handle) {
+      stageHandles.delete(name);
+      notify();
+    }
+  };
+}
+
+export function getStageHandle(name: StageHandleName): Material | undefined {
+  return stageHandles.get(name);
 }

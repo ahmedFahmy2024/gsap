@@ -14,6 +14,10 @@ export const ease = {
   reveal: 'power3.out',
   /** Content leaving: quick, unceremonious. */
   exit: 'power2.in',
+  /** Pointer-tracking micro-interactions: trails the cursor, never leads. */
+  follow: 'power3.out',
+  /** Spring-back release for magnetic elements (Phase 4). */
+  magnetic: 'elastic.out(1, 0.45)',
 } as const;
 
 /** Durations in seconds, by scale. */
@@ -21,6 +25,8 @@ export const duration = {
   fast: 0.4,
   reveal: 0.9,
   slow: 1.4,
+  /** Settle time of the magnetic spring-back (pairs with ease.magnetic). */
+  spring: 0.9,
 } as const;
 
 /** Stagger between sibling reveal elements, seconds. */

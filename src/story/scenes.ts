@@ -45,10 +45,31 @@ export interface CameraPose {
   fov: number;
 }
 
-/** Environment state, first cut: the page backdrop tint behind the canvas.
- *  Lighting/material choreography is Phase 4 (§11). */
+/**
+ * Environment state (§5): the page backdrop tint behind the canvas plus the
+ * Phase 4 material color story. All values ride the master scrub timeline —
+ * the Director tweens them through registry material handles — so the mood
+ * is a pure function of scroll position, like every pose.
+ */
 export interface EnvironmentState {
+  /** Page backdrop tint (CSS color, tweened on the DOM backdrop div). */
   backdrop: string;
+  /** Status-LED emissive intensity. Values > 1 feed the high-tier bloom. */
+  led: number;
+  /**
+   * Fresnel-style rim accent on the enclosure (physical-material sheen).
+   * MUST stay > 0 in every scene: the shader compiles the sheen path only
+   * when sheen > 0, and crossing zero mid-scroll would recompile mid-frame.
+   */
+  sheen: number;
+  /** sRGB hex tint of that rim accent — the per-chapter color story. */
+  sheenColor: string;
+  /** Enclosure env-map intensity — how much the studio light mood reads. */
+  bodyEnv: number;
+  /** Volume-ring env-map intensity — pushed up for the detail close-up. */
+  ringEnv: number;
+  /** Soundfield particle opacity 0–1 (the acoustics "field" moment). */
+  particles: number;
 }
 
 export interface SceneAnnotation {
@@ -161,7 +182,17 @@ export const scenes: SceneDescriptor[] = [
       lookAt: { x: 0, y: 0.01, z: 0 },
       fov: 35,
     },
-    environment: { backdrop: '#0b0b0c' },
+    // Resting mood — HeroModel's initial material props read THIS scene's
+    // environment, so the pre-scroll frame and the scrubbed t=0 frame match.
+    environment: {
+      backdrop: '#0b0b0c',
+      led: 4,
+      sheen: 0.12,
+      sheenColor: '#566070',
+      bodyEnv: 1.1,
+      ringEnv: 1.2,
+      particles: 0,
+    },
     transition: { ease: 'travel', hold: 0 },
     contentRevealAt: 0.3,
     annotations: [],
@@ -179,7 +210,17 @@ export const scenes: SceneDescriptor[] = [
       lookAt: { x: -0.21, y: 0.02, z: 0 },
       fov: 35,
     },
-    environment: { backdrop: '#100d0d' },
+    // Warm milled-metal mood while the seamless back is presented; the LED
+    // faces away here, so it dims rather than glowing through the body.
+    environment: {
+      backdrop: '#100d0d',
+      led: 2.5,
+      sheen: 0.3,
+      sheenColor: '#ffb38a',
+      bodyEnv: 1.3,
+      ringEnv: 1.1,
+      particles: 0,
+    },
     transition: { ease: 'travel', hold: 0.35 },
     contentRevealAt: 0.3,
     annotations: [],
@@ -207,7 +248,17 @@ export const scenes: SceneDescriptor[] = [
       lookAt: { x: 0.21, y: 0.02, z: 0 },
       fov: 37,
     },
-    environment: { backdrop: '#0a0d12' },
+    // The "field, not a beam" moment: cool rim, bright LED beacon, and the
+    // soundfield particles at full presence — the page's one particle beat.
+    environment: {
+      backdrop: '#0a0d12',
+      led: 5.5,
+      sheen: 0.22,
+      sheenColor: '#8fb0ff',
+      bodyEnv: 1.05,
+      ringEnv: 1.2,
+      particles: 0.8,
+    },
     transition: { ease: 'travel', hold: 0.35 },
     contentRevealAt: 0.3,
     annotations: [
@@ -247,7 +298,17 @@ export const scenes: SceneDescriptor[] = [
       lookAt: { x: -0.17, y: 0.1, z: 0 },
       fov: 30,
     },
-    environment: { backdrop: '#070708' },
+    // Ring close-up: the body recedes (bodyEnv down) while the machined
+    // ring catches more of the studio — "every surface earns its place".
+    environment: {
+      backdrop: '#070708',
+      led: 3,
+      sheen: 0.16,
+      sheenColor: '#e6e1d8',
+      bodyEnv: 0.85,
+      ringEnv: 2.2,
+      particles: 0,
+    },
     transition: { ease: 'travel', hold: 0.3 },
     contentRevealAt: 0.3,
     annotations: [
@@ -283,7 +344,17 @@ export const scenes: SceneDescriptor[] = [
       lookAt: { x: 0, y: 0.01, z: 0 },
       fov: 35,
     },
-    environment: { backdrop: '#0b0b0c' },
+    // Heroic return with the brand accent on the rim and the LED as a
+    // beacon — the conversion moment gets the warmest grade of the story.
+    environment: {
+      backdrop: '#0b0b0c',
+      led: 5,
+      sheen: 0.26,
+      sheenColor: '#e8602c',
+      bodyEnv: 1.2,
+      ringEnv: 1.5,
+      particles: 0,
+    },
     transition: { ease: 'travel', hold: 0.25 },
     contentRevealAt: 0.3,
     annotations: [],

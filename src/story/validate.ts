@@ -7,9 +7,15 @@
  */
 
 import { ease } from './motion';
-import type { SceneAnnotation, SceneDescriptor, ScenePatch } from './scenes';
+import type {
+  EnvironmentState,
+  SceneAnnotation,
+  SceneDescriptor,
+  ScenePatch,
+} from './scenes';
 
 const isUnit = (value: number) => value >= 0 && value <= 1;
+const isHexColor = (value: string) => /^#[0-9a-f]{6}$/i.test(value);
 
 /** Returns human-readable problems; empty array = valid story. */
 export function validateStory(
@@ -54,6 +60,7 @@ export function validateStory(
       problems.push(`${at}: contentRevealAt must be 0–1`);
     }
     problems.push(...validatePose(scene.hero.scale, scene.camera.fov, at));
+    problems.push(...validateEnvironment(scene.environment, at));
 
     for (const annotation of scene.annotations) {
       if (annotationIds.has(annotation.id)) {
@@ -84,6 +91,40 @@ function validatePose(scale: number, fov: number, at: string): string[] {
   return problems;
 }
 
+/**
+ * Environment ranges. The sheen floor is a *shader* constraint, not taste:
+ * three only compiles the sheen code path while sheen > 0, so a scene
+ * authored at 0 would trigger a program recompile mid-scrub (§12 jank).
+ */
+function validateEnvironment(
+  env: Partial<EnvironmentState>,
+  at: string,
+): string[] {
+  const problems: string[] = [];
+  for (const key of ['backdrop', 'sheenColor'] as const) {
+    const color = env[key];
+    if (color !== undefined && !isHexColor(color)) {
+      problems.push(`${at}: ${key} "${color}" is not a #rrggbb color`);
+    }
+  }
+  if (env.led !== undefined && (env.led < 0 || env.led > 10)) {
+    problems.push(`${at}: led intensity must be 0–10`);
+  }
+  if (env.sheen !== undefined && (env.sheen <= 0 || env.sheen > 1)) {
+    problems.push(`${at}: sheen must be in (0, 1] — see compile-once note`);
+  }
+  for (const key of ['bodyEnv', 'ringEnv'] as const) {
+    const value = env[key];
+    if (value !== undefined && (value <= 0 || value > 4)) {
+      problems.push(`${at}: ${key} must be in (0, 4]`);
+    }
+  }
+  if (env.particles !== undefined && !isUnit(env.particles)) {
+    problems.push(`${at}: particles must be 0–1`);
+  }
+  return problems;
+}
+
 function validateAnnotation(
   annotation: SceneAnnotation,
   at: string,
@@ -107,6 +148,9 @@ function validatePatch(patch: ScenePatch, at: string): string[] {
     (patch.camera.fov < 10 || patch.camera.fov > 120)
   ) {
     problems.push(`${at}: camera fov outside sane range 10–120`);
+  }
+  if (patch.environment) {
+    problems.push(...validateEnvironment(patch.environment, at));
   }
   for (const annotation of patch.annotations ?? []) {
     problems.push(...validateAnnotation(annotation, at));
